@@ -1,28 +1,15 @@
 {% extends "base.html" %}
 
-{% block head %}
-  <title>{{title}}</title>
-  <style>
-  .error { color: red; }
-  </style>
-{% endblock %}
-
 {% block content %}
-  <h1> {{ title }} </h1>
-    <hr/>
-    {% if blogs|length == 0 %}
+<h2 style="text-align: center;">Build A Blog</h2>
 
-    <p>No Blogs Posts!</p>
 
-    {% else %}
+  {% for blog in blogs %}
+    <h3><a href='/blog?id={{ blog.id }}'>{{ blog.title }}</a></h3>
+    <p>{{ blog.body }}<p>
+    <p><em>written by <a href='/blog?user={{ blog.owner.id }}'>{{ blog.owner.username }}</a></em></p>
+    <hr>
 
-      {% for blog in blogs %}
+  {% endfor %}
 
-      <h3><a href="/blog?id={{blog.id}}">{{blog.title}}</a></h3>
-      <p>{{blog.body}}<p>
-      <hr>
-
-      {% endfor %}
-    {% endif %}
-    
 {% endblock %}
