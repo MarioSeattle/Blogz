@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, render_template
+from flask import Flask, request, redirect, render_template, flash, session
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -7,15 +7,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://Blogz:sounders@localhos
 app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 
-class Blog(db.Model):
 
+class Blog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120))
-    body = db.Column(db.String(1000))
+    body = db.Column(db.String(200))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    def __init__(self, title, body):
+    def  __init__(self, title, body, owner):
         self.title = title
         self.body = body
+        self.owner = owner
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -34,53 +36,38 @@ def index():
 
     return
 
-
 @app.before_request
 def require_login():
 
-    allowed_routes = ['signup', 'login', 'index', 'blog_posts']
-    if request.endpoint not in allowed_routes and 'username':
 
-        return redirect('/signup')
+    return
 
 @app.route('/logout')
 def logout():
 
-    return redirect('/blog')
+    return
 
 @app.route('/newPost', methods=['GET', 'POST'])
 def add_blog():
 
-    if request.method == 'GET':
-
-        return render_template('newPost.html', title="Add Blog Entry")
+    owner = User.query.filter_by(username=session['username']).first()
 
     if request.method == 'POST':
+        title = request.form['title']
+        body = request.form['body']
+        if title == '':
+            flash('Please enter a title for your new blog post', 'error')
+            return render_template('newPost.html', body=body)
+        if body == '':
+            flash('Please enter a body for your new blog post', 'error')
+            return render_template('newPost.html', title=title)
+        blog = Blog(title=title, body=body, owner=owner)
+        db.session.add(blog)
+        db.session.commit()
+        return redirect('/blog?id=' + str(blog.id))
 
-        blog_title = request.form['blog']
-        blog_body = request.form['blog_body']
-        title_error = ""
-        body_error = ""
 
-        if len(blog_title) < 1:
-            title_error = "Please fill in the title"
-
-        if len(blog_body) < 1:
-            body_error = "Please fill in the body"
-
-        if not title_error and not body_error:
-
-            new_blog = Blog(blog_title, blog_body)
-            db.session.add(new_blog)
-            db.session.commit()
-            query_param_url = "/blog?id=" + str(new_blog.id)
-
-            return redirect(query_param_url)
-
-        else:
-
-            return render_template('newPost.html', title="Add Blog Entry",
-                title_error=title_error, body_error=body_error)
+    return render_template('newPost.html')
 
 
 @app.route('/login', methods=['POST', 'GET'])
