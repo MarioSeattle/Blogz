@@ -30,20 +30,60 @@ class User(db.Model):
         self.password = password
 
 
-@app.route('/blog', methods=['GET', 'POST'])
-def index():
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+        if user and user.password == password:
+            session['username'] = username
+            flash("Logged in")
+            print(session)
+            return redirect('/newpost')
+        else:
+            flash('User password incorrect, or user does not exist', 'error')
 
 
-    return
-
-@app.before_request
-def require_login():
+    return render_template('login.html')
 
 
-    return
+@app.route('/signup', methods=['POST', 'GET'])
+def signup():
+
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        verify = request.form['verify']
+
+        existing_user = User.query.filter_by(username=username).first()
+
+        if (username == "") or (" " in username) or (len(username) <= 3):
+            flash("That's not a valid username", 'error')
+            username = ""
+
+        elif (password == "") or (" " in password) or (len(password) <= 3):
+            flash("That's not a valid password", 'error')
+
+        elif verify != password:
+            flash("Passwords to not match", 'error')
+
+        elif existing_user:
+            flash('Username Already Exists', 'error')
+
+        else:
+            new_user = User(username, password)
+            db.session.add(new_user)
+            db.session.commit()
+            session['username'] = username
+            return redirect('/newpost')
+
+    return render_template('signup.html')
+
 
 @app.route('/logout')
 def logout():
+
 
     return
 
@@ -70,12 +110,6 @@ def add_blog():
     return render_template('newPost.html')
 
 
-@app.route('/login', methods=['POST', 'GET'])
-def login():
-
-    return
-
-
 @app.route('/signup', methods=['POST', 'GET'])
 def signup():
 
@@ -83,10 +117,15 @@ def signup():
 
 def single_blog():
 
-    blog_id = int(request.args.get('id'))
-    single_blog = Blog.query.get(blog_id)
 
-    return render_template('singlePost.html',id=single_blog.id, title=single_blog.title,body=single_blog.body)
+
+    return
+
+@app.route('/blog', methods=['GET', 'POST'])
+def index():
+
+
+    return
 
 
 if __name__ == '__main__':
