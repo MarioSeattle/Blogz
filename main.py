@@ -32,16 +32,20 @@ class User(db.Model):
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
+
         if user and user.password == password:
             session['username'] = username
             flash("Logged in")
-            print(session)
+
             return redirect('/newPost')
+
         else:
+
             flash('User password incorrect, or user does not exist', 'error')
 
     return render_template('login.html')
@@ -75,6 +79,7 @@ def signup():
             db.session.add(new_user)
             db.session.commit()
             session['username'] = username
+
             return redirect('/newPost')
 
     return render_template('signup.html')
@@ -84,6 +89,7 @@ def signup():
 def logout():
 
     del session['username']
+
     return redirect('/blog')
 
 
@@ -92,14 +98,13 @@ def require_login():
 
     allowed_routes = ['signup', 'login', 'index', 'blog']
     if request.endpoint not in allowed_routes and 'username' not in session:
+
         return redirect('/signup')
 
 @app.route('/newPost', methods=['GET', 'POST'])
 def new_post():
 
     return render_template("newPost.html")
-
-
 
 @app.route('/blog', methods=['GET', 'POST'])
 def index():
@@ -113,18 +118,23 @@ def index():
         body = request.form['body']
         title_error = ""
         body_error = ""
+
         if blog_title is '':
             title_error = 'Please enter a title for your new blog post'
             flash(title_error, 'error')
+
         if body is '':
             body_error = 'Please enter a body for your new blog post'
             flash(body_error, 'error')
+
         if not title_error and not body_error:
             blog = Blog(blog_title, body, owner)
             db.session.add(blog)
             db.session.commit()
             blog_id = blog.id
+
             return redirect('/blog?id={0}'.format(blog_id))
+
         else:
             return render_template('newPost.html', blog_title=blog_title, body=body)
 
