@@ -10,7 +10,7 @@ db = SQLAlchemy(app)
 
 class Blog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(120))
+    blog_title = db.Column(db.String(120))
     body = db.Column(db.String(200))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
@@ -40,10 +40,9 @@ def login():
             session['username'] = username
             flash("Logged in")
             print(session)
-            return redirect('/newpost')
+            return redirect('/newPost')
         else:
             flash('User password incorrect, or user does not exist', 'error')
-
 
     return render_template('login.html')
 
@@ -76,7 +75,7 @@ def signup():
             db.session.add(new_user)
             db.session.commit()
             session['username'] = username
-            return redirect('/newpost')
+            return redirect('/newPost')
 
     return render_template('signup.html')
 
@@ -84,48 +83,56 @@ def signup():
 @app.route('/logout')
 def logout():
 
+    del session['username']
+    return redirect('/blog')
 
-    return
+
+@app.before_request
+def require_login():
+
+    allowed_routes = ['signup', 'login', 'index', 'blog']
+    if request.endpoint not in allowed_routes and 'username' not in session:
+        return redirect('/signup')
 
 @app.route('/newPost', methods=['GET', 'POST'])
-def add_blog():
+def new_post():
 
-    owner = User.query.filter_by(username=session['username']).first()
-
-    if request.method == 'POST':
-        title = request.form['title']
-        body = request.form['body']
-        if title == '':
-            flash('Please enter a title for your new blog post', 'error')
-            return render_template('newPost.html', body=body)
-        if body == '':
-            flash('Please enter a body for your new blog post', 'error')
-            return render_template('newPost.html', title=title)
-        blog = Blog(title=title, body=body, owner=owner)
-        db.session.add(blog)
-        db.session.commit()
-        return redirect('/blog?id=' + str(blog.id))
+    return render_template("newPost.html")
 
 
-    return render_template('newPost.html')
-
-
-@app.route('/signup', methods=['POST', 'GET'])
-def signup():
-
-    return
-
-def single_blog():
-
-
-
-    return
 
 @app.route('/blog', methods=['GET', 'POST'])
 def index():
 
+    owner = User.query.filter_by(username=session['username']).first()
 
-    return
+    blogs = Blog.query.all()
+
+    if request.method == 'POST':
+        blog_title = request.form['blog_title']
+        body = request.form['body']
+        title_error = ""
+        body_error = ""
+        if blog_title is '':
+            title_error = 'Please enter a title for your new blog post'
+            flash(title_error, 'error')
+        if body is '':
+            body_error = 'Please enter a body for your new blog post'
+            flash(body_error, 'error')
+        if not title_error and not body_error:
+            blog = Blog(blog_title, body, owner)
+            db.session.add(blog)
+            db.session.commit()
+            blog_id = blog.id
+            return redirect('/blog?id={0}'.format(blog_id))
+        else:
+            return render_template('newPost.html', blog_title=blog_title, body=body)
+
+    return render_template('blog.html', blogs=blogs)
+
+
+
+app.secret_key = b'\x13\x0eW\xf3s\xc9\xfa\xc7\x8d\xa2h\xd9x\xd70l\xff\xca\xe6[f\xd0\x14\x1b'
 
 
 if __name__ == '__main__':
