@@ -14,8 +14,8 @@ class Blog(db.Model):
     body = db.Column(db.String(200))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    def  __init__(self, title, body, owner):
-        self.title = title
+    def __init__(self, blog_title, body, owner):
+        self.blog_title = blog_title
         self.body = body
         self.owner = owner
 
@@ -106,8 +106,17 @@ def new_post():
 
     return render_template("newPost.html")
 
+
 @app.route('/blog', methods=['GET', 'POST'])
 def index():
+
+    blog_id = request.args.get('id')
+
+    if blog_id:
+
+        blog = Blog.query.filter_by(id=blog_id).first()
+
+        return render_template("singlePost.html", blog=blog)
 
     owner = User.query.filter_by(username=session['username']).first()
 

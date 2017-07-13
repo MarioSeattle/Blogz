@@ -2,8 +2,21 @@
 
 {% block content %}
 
-<h2 style="text-align: center;">{{title}}</h2>
+<style>
+    .title{
+        font-weight:bold;
+        font-size:300%;
+        text-align:center;
+    }
+    .body{
+        font-size:200%;
+    }
+</style>
 
-<p> {{body}} </p>
+        <div class="title">{{blog.blog_title}}</div>
+
+        <br>
+
+        <div class="body">{{blog.body}}</div>
 
 {% endblock %}
