@@ -99,7 +99,7 @@ def require_login():
     allowed_routes = ['signup', 'login', 'index', 'blog']
     if request.endpoint not in allowed_routes and 'username' not in session:
 
-        return redirect('/signup')
+        return redirect('/login')
 
 @app.route('/newPost', methods=['GET', 'POST'])
 def new_post():
@@ -108,46 +108,65 @@ def new_post():
 
 
 @app.route('/blog', methods=['GET', 'POST'])
-def index():
+def blog():
+    if request.method == 'GET':
+        blog_id = request.args.get('id')
 
-    blog_id = request.args.get('id')
+        user_id = request.args.get('user')
 
-    if blog_id:
+        if blog_id:
 
-        blog = Blog.query.filter_by(id=blog_id).first()
+            blog = Blog.query.filter_by(id=blog_id).first()
 
-        return render_template("singlePost.html", blog=blog)
+            return render_template("singlePost.html", blog=blog)
 
-    owner = User.query.filter_by(username=session['username']).first()
+        elif user_id:
 
-    blogs = Blog.query.all()
+            owner = User.query.filter_by(id=user_id).first()
 
-    if request.method == 'POST':
-        blog_title = request.form['blog_title']
-        body = request.form['body']
-        title_error = ""
-        body_error = ""
+            blogs = Blog.query.filter_by(owner=owner).all()
 
-        if blog_title is '':
-            title_error = 'Please enter a title for your new blog post'
-            flash(title_error, 'error')
-
-        if body is '':
-            body_error = 'Please enter a body for your new blog post'
-            flash(body_error, 'error')
-
-        if not title_error and not body_error:
-            blog = Blog(blog_title, body, owner)
-            db.session.add(blog)
-            db.session.commit()
-            blog_id = blog.id
-
-            return redirect('/blog?id={0}'.format(blog_id))
+            return render_template("singleUser.html", owner=owner, blogs=blogs)
 
         else:
-            return render_template('newPost.html', blog_title=blog_title, body=body)
+            blogs = Blog.query.all()
+            return render_template('blog.html', blogs=blogs)
 
-    return render_template('blog.html', blogs=blogs)
+    blog_title = request.form['blog_title']
+    body = request.form['body']
+    title_error = ""
+    body_error = ""
+
+    if blog_title is '':
+        title_error = 'Please enter a title for your new blog post'
+        flash(title_error, 'error')
+
+    if body is '':
+        body_error = 'Please enter a body for your new blog post'
+        flash(body_error, 'error')
+
+    if not title_error and not body_error:
+        owner = User.query.filter_by(username=session['username']).first()
+        blog = Blog(blog_title, body, owner)
+        db.session.add(blog)
+        db.session.commit()
+        blog_id = blog.id
+
+        return redirect('/blog?id={0}'.format(blog_id))
+
+    else:
+        return render_template('newPost.html', blog_title=blog_title, body=body)
+
+
+
+@app.route('/index')
+def index():
+
+    users = User.query.all()
+
+    return  render_template("index.html", users=users)
+
+
 
 
 
@@ -156,3 +175,4 @@ app.secret_key = b'\x13\x0eW\xf3s\xc9\xfa\xc7\x8d\xa2h\xd9x\xd70l\xff\xca\xe6[f\
 
 if __name__ == '__main__':
     app.run()
+
