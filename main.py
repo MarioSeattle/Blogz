@@ -90,7 +90,7 @@ def logout():
 
     del session['username']
 
-    return redirect('/blog')
+    return redirect('/')
 
 
 @app.before_request
